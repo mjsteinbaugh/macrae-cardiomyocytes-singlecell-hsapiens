@@ -1,0 +1,21 @@
+Thanks for getting back to me. Excited to get the first round of results soon.
+Most probably there will be 3 different cell types:
+1) SHOX2+ MYH+-  cells which represents cardiac pacemaker cells.
+2) MYH6+ cells which most probably express MYL4 and/or MLC2a as well because they have atrial phenotype. Since MYL4 is the gene that we knocked out, there might be variation in its expression especially in the KO lines (M9 and M16), but you should probably be able to detect the sequence.
+3) MYH6- SHOX2- population which are other non cardiomyocyte cells
+
+
+
+Hi shannan,
+
+For pacemakers: main marker would be Shox2
+They would also probably be expressing high tbx5, high ISL1 also probably MYH11, MYH6, MYLK
+
+For atrial cells: MYH6, MYL4, MLC2a, CTNT, NPPA, SCN5a, NKX2.5
+
+Total RNAseq showed changes in the level of imprinted genes on chromosome 15, so we are interested to see if we detect the same changes in single cell seq. also changes in ion channels (scn1b, kcnk5, k1.7, kcnh5) and some structural proteins such as ANKRD1. We are also interested in PITX2c gene which has 3 isoforms.However, Not sure if we can check each isoform separately. Other new things on sc-seq are also appreciated :)
+
+The WTs are true biological replicates.
+
+Thanks,
+Z

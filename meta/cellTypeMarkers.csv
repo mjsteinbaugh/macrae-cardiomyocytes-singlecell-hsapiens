@@ -1,0 +1,40 @@
+cell,ensgene,symbol,association,highConf,comments
+Cardiac Pacemaker,ENSG00000168779,SHOX2,positive,TRUE,
+Cardiac Pacemaker,ENSG00000089225,TBX5,positive,FALSE,
+Cardiac Pacemaker,ENSG00000016082,ISL1,positive,FALSE,
+Cardiac Pacemaker,ENSG00000133392,MYH11,positive,FALSE,
+Cardiac Pacemaker,ENSG00000276480,MYH11,positive,FALSE,CHR_HSCHR16_1_CTG1
+Cardiac Pacemaker,ENSG00000197616,MYH6,positive,TRUE,
+Cardiac Pacemaker,ENSG00000065534,MYLK,positive,FALSE,
+Atrial,ENSG00000197616,MYH6,positive,TRUE,
+Atrial,ENSG00000198336,MYL4,positive,TRUE,
+Atrial,ENSG00000165478,HEPACAM,positive,TRUE,MLC2a
+Atrial,ENSG00000118194,TNNT2,positive,TRUE,CTNT?
+Atrial,ENSG00000175206,NPPA,positive,TRUE,
+Atrial,ENSG00000183873,SCN5A,positive,TRUE,
+Atrial,ENSG00000183072,NKX2-5,positive,TRUE,NKX2.5
+Non-Cardiomyocyte (negative),ENSG00000197616,MYH6,negative,TRUE,
+Non-Cardiomyocyte (negative),ENSG00000168779,SHOX2,negative,TRUE,
+Miscellaneous,ENSG00000105711,SCN1B,#N/A,FALSE,
+Miscellaneous,ENSG00000164626,KCNK5,#N/A,FALSE,
+Miscellaneous,#N/A,K1.7,#N/A,FALSE,Failed to find Ensembl ID; potassium channel
+Miscellaneous,ENSG00000140015,KCNH5,#N/A,FALSE,
+Miscellaneous,ENSG00000148677,ANKRD1,#N/A,FALSE,
+Miscellaneous,ENSG00000164093,PITX2,#N/A,FALSE,PITX2c
+Cardiac Pacemaker (negative),ENSG00000002079,MYH16,negative,FALSE,MYH family
+Cardiac Pacemaker (negative),ENSG00000006788,MYH13,negative,FALSE,MYH family
+Cardiac Pacemaker (negative),ENSG00000078814,MYH7B,negative,FALSE,MYH family
+Cardiac Pacemaker (negative),ENSG00000092054,MYH7,negative,FALSE,MYH family
+Cardiac Pacemaker (negative),ENSG00000100345,MYH9,negative,FALSE,MYH family
+Cardiac Pacemaker (negative),ENSG00000105357,MYH14,negative,FALSE,MYH family
+Cardiac Pacemaker (negative),ENSG00000109061,MYH1,negative,FALSE,MYH family
+Cardiac Pacemaker (negative),ENSG00000109063,MYH3,negative,FALSE,MYH family
+Cardiac Pacemaker (negative),ENSG00000125414,MYH2,negative,FALSE,MYH family
+Cardiac Pacemaker (negative),ENSG00000133020,MYH8,negative,FALSE,MYH family
+Cardiac Pacemaker (negative),ENSG00000133026,MYH10,negative,FALSE,MYH family
+Cardiac Pacemaker (negative),ENSG00000133392,MYH11,negative,FALSE,MYH family
+Cardiac Pacemaker (negative),ENSG00000144821,MYH15,negative,FALSE,MYH family
+Cardiac Pacemaker (negative),ENSG00000197616,MYH6,negative,FALSE,MYH family
+Cardiac Pacemaker (negative),ENSG00000264424,MYH4,negative,FALSE,MYH family
+Cardiac Pacemaker (negative),ENSG00000272975,MYHAS,negative,FALSE,MYH family
+Cardiac Pacemaker (negative),ENSG00000276480,MYH11,negative,FALSE,MYH family

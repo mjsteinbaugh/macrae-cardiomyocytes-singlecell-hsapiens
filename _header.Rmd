@@ -1,0 +1,21 @@
+# Overview
+
+- Principal Investigator: Calum MacRae
+- Researcher: Zaniar Ghazizadeh
+- Experiment: Single-cell RNA-seq analysis in cardiomyocytes
+
+
+Sample information:
+
+- 6 samples were sequenced: M7 and M1 are WTs. N=1 for each
+- M9 is heterozygote mutant N=2
+- M16 is homozygote mutant N=2
+
+
+5000 cells were encapsulated, 2500 went through library prep and sequencing.
+
+We have >3 cell populations in differentiation (Pacemakers: Shox2+MYH6+- cells, Atrial CMs: Shox2-/lowMYH6+ Negative population MYH6-SHOX2- and probably some other populations!). We want to know which population is behaving differently in mutants vs WT and also if all cells of each of those 3 populations have different expression profile or just a subset of them are abnormal, especially in terms of channelopathies. Also by comparing heterozygote vs homozygote we thought we might be able to further tease out the abnormal population.
+
+
+
+* * *
