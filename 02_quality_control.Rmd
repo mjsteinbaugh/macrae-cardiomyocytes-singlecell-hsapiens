@@ -1,0 +1,410 @@
+---
+title: "Quality Control"
+author: "`r getOption('author')`"
+date: "`r Sys.Date()`"
+bibliography: bibliography.bib
+params:
+  bcb_file: "data/2018-07-30/bcb.rda"
+  n_cells: 2500
+  min_umis: 300
+  max_umis: !r Inf
+  min_genes: 200
+  max_genes: !r Inf
+  min_novelty: 0.8
+  max_mito_ratio: 1
+  min_cells_per_gene: 10
+  data_dir: !r file.path("data", Sys.Date())
+  results_dir: !r file.path("results", Sys.Date(), "quality_control")
+---
+
+```{r setup, cache=FALSE, message=FALSE}
+# Last modified 2018-07-30
+bcbioSingleCell::prepareSingleCellTemplate()
+source("_setup.R")
+
+# Directory paths ==============================================================
+invisible(mapply(
+    FUN = dir.create,
+    path = c(params$data_dir, params$results_dir),
+    MoreArgs = list(showWarnings = FALSE, recursive = TRUE)
+))
+
+# Load object ==================================================================
+bcb_name <- load(params$bcb_file)
+bcb <- get(bcb_name, inherits = FALSE)
+stopifnot(is(bcb, "SingleCellExperiment"))
+invisible(validObject(bcb))
+bcb_original <- bcb
+
+# Metadata fix, for working with v0.1.8
+# `sampleNameAggregate` deprecated in favor of `aggregate` column in sampleData
+sampleData(bcb)$aggregate <- sampleData(bcb)$sampleNameAggregate
+sampleData(bcb)$sampleNameAggregate <- NULL
+
+print(bcb)
+```
+
+```{r header, child="_header.Rmd"}
+```
+
+```{r sample_data}
+# getMethod("sampleData", "SingleCellExperiment")
+sample_data <- sampleData(bcb) %>% as.data.frame()
+write.csv(
+    x = sample_data,
+    file = file.path(params$results_dir, "sample_data.csv")
+)
+sample_data
+```
+
+[bcbio][] run data was imported from **`r metadata(bcb)$uploadDir`**.
+
+# Count alignment
+
+We aligned the counts using the *Homo sapiens* GRCh38 transcriptome FASTA from [Ensembl][] release 90.
+
+# Reads per cell {.tabset}
+
+These are counts of how many reads are assigned to a given cellular barcode. It is normal for single cell RNA-seq data to contain a large number of low complexity barcodes. The bcbio pipeline filters out most of these barcodes, and here we have applied a threshold cutoff of a minimum of `r metadata(bcb)$cellularBarcodeCutoff` reads per cell. The unfiltered read count distributions are shown here.
+
+## Histogram
+
+For high quality data, the proportional histogram should contain a single large peak that represents cells that were encapsulated. If we see a strong shoulder, or a bimodal distribution of the cells, that can indicate a couple problems. It might be that there is free floating RNA, which happens when cells are dying. It could also be that there are a set of cells that failed for some reason. Finally, it could also be that there are biologically different types of cells, and one type is much smaller than the other. If this is the case we would expect to see less RNA being sequenced from the smaller cells.
+
+```{r plot_reads_per_cell_histogram}
+# getMethod("plotReadsPerCell", "bcbioSingleCell")
+
+# Visualize technical replicates
+plotReadsPerCell(
+    object = bcb,
+    geom = "histogram",
+    interestingGroups = "sampleName"
+)
+
+# Visualize across genotype
+plotReadsPerCell(
+    object = bcb,
+    geom = "histogram",
+    interestingGroups = "sampleName"
+) +
+    facet_wrap(vars(genotype))
+```
+
+## ECDF
+
+An empirical distribution function (ECDF) plot will show the frequency distribution of the reads per cell. You can see that the vast majority of low complexity barcodes plateau at a read depth below 1000 reads per cell.
+
+```{r plot_reads_per_cell_ecdf}
+# getMethod("plotReadsPerCell", "bcbioSingleCell")
+plotReadsPerCell(
+    object = bcb,
+    geom = "ecdf",
+    interestingGroups = "sampleName"
+)
+```
+
+# Aggregate replicates
+
+We're seeing tight sequencing replicate consistency, so let's aggregate the technical replicates prior to downstream quality control filtering. Note that here we're keeping the `M16` and `M9` biological replicates separate, since they were captured separately with unique i5 index barcodes.
+
+```{r aggregate_replicates}
+sce <- aggregateReplicates(bcb)
+print(sce)
+```
+
+```{r sample_data_aggregate}
+sampleData(sce)
+```
+
+Now let's take a look at the quality control metrics of the samples after the technical sequencing replicates have been aggregated. As you can see, these look consistent with the plots above. Some of the median values have increased slightly because we're now analyzing more reads per gene for each cell.
+
+# UMI counts per cell {.tabset}
+
+Now let's assess the distribution of unique molecular identifier (UMI)-deconvoluted counts per cell. In general, the distributions should be relatively uniform per sample. Here we are also including violin and ridgeline plots, with the average number of genes per cell labeled.
+
+```{r plot_umis_per_cell_prefilter}
+# getMethod("plotUMIsPerCell", "bcbioSingleCell")
+
+markdownHeader("Violin", level = 2)
+plotUMIsPerCell(
+    object = sce,
+    geom = "violin",
+    min = params$min_umis,
+    max = params$max_umis
+)
+
+markdownHeader("Ridgeline", level = 2)
+plotUMIsPerCell(
+    object = sce,
+    geom = "ridgeline",
+    min = params$min_umis,
+    max = params$max_umis
+)
+
+markdownHeader("Histogram", level = 2)
+plotUMIsPerCell(
+    object = sce,
+    geom = "histogram",
+    interestingGroups = "sampleName",
+    min = params$min_umis,
+    max = params$max_umis
+)
+
+markdownHeader("ECDF", level = 2)
+plotUMIsPerCell(
+    object = sce,
+    geom = "ecdf",
+    interestingGroups = "sampleName",
+    min = params$min_umis,
+    max = params$max_umis
+)
+```
+
+# Filter cells by UMI count
+
+Let's apply this step first and then proceed to evaluating gene detection, mitocondrial transcript abundance, and novelty scores.
+
+```{r filter_cells_by_umi}
+# getMethod("filterCells", "SingleCellExperiment")
+sce <- filterCells(
+    object = sce,
+    minUMIs = params$min_umis,
+    maxUMIs = params$max_umis
+)
+```
+
+Let's take a look at the UMI per cell distributions after this filtering step. Note that we haven't applied very strict filtering here — we're going to cut off the "low quality" cells based on the gene detection rate, novelty score, and mitochondrial abundance.
+
+```{r plot_umis_per_cell_postfilter}
+# getMethod("plotUMIsPerCell", "SingleCellExperiment")
+plotUMIsPerCell(
+    object = sce,
+    geom = "histogram",
+    interestingGroups = "sampleName",
+    min = params$min_umis,
+    max = params$max_umis
+)
+```
+
+# Genes detected per cell {.tabset}
+
+Here by "detected", we mean genes with a non-zero count measurement per cell. Seeing gene detection in the range of `500`-`5000` is normal for most single-cell experiments.
+
+```{r plot_genes_per_cell}
+# getMethod("plotGenesPerCell", "SingleCellExperiment")
+
+markdownHeader("Violin", level = 2)
+plotGenesPerCell(
+    object = sce,
+    geom = "violin",
+    min = min(params$min_genes),
+    max = max(params$max_genes)
+)
+
+markdownHeader("Ridgeline", level = 2)
+plotGenesPerCell(
+    object = sce,
+    geom = "ridgeline",
+    min = min(params$min_genes),
+    max = max(params$max_genes)
+)
+
+markdownHeader("Histogram", level = 2)
+plotGenesPerCell(
+    object = sce,
+    geom = "histogram",
+    interestingGroups = "sampleName",
+    min = min(params$min_genes),
+    max = max(params$max_genes)
+)
+
+markdownHeader("ECDF", level = 2)
+plotGenesPerCell(
+    object = sce,
+    geom = "ecdf",
+    interestingGroups = "sampleName",
+    min = min(params$min_genes),
+    max = max(params$max_genes)
+)
+```
+
+# UMIs vs. genes detected
+
+If we graph out the total number of UMI counts per cell vs. the genes detected per cell, we can assess whether there is a large population of low quality cells with low counts and/or gene detection.
+
+```{r plot_umis_vs_genes}
+# getMethod("plotUMIsVsGenes", "SingleCellExperiment")
+plotUMIsVsGenes(sce)
+```
+
+# Novelty score {.tabset}
+
+Another way to QC the data is to look for less novelty, that is cells that have less genes detected per count than other cells. We can see the samples where we sequenced each cell less have a higher overall novelty, that is because we have not started saturated the sequencing for any given gene for these samples. Outlier cells in these samples might be cells that we have a less complex RNA species than other cells. Sometimes we can detect contamination with low complexity cell types like red blood cells via this metric.
+
+Generally we recommend keeping cells with a minimum novelty score (log 10 genes per UMI) of at least `r params$minNovelty`. The vast majority of cells in this dataset are falling above this cutoff, so this looks good.
+
+```{r plot_novelty}
+# getMethod("plotNovelty", "SingleCellExperiment")
+
+markdownHeader("Violin", level = 2)
+plotNovelty(
+    object = sce,
+    geom = "violin",
+    min = min(params$min_novelty)
+)
+
+markdownHeader("Ridgeline", level = 2)
+plotNovelty(
+    object = sce,
+    geom = "ridgeline",
+    min = min(params$min_novelty)
+)
+
+markdownHeader("Histogram", level = 2)
+plotNovelty(
+    object = sce,
+    geom = "histogram",
+    interestingGroups = "sampleName",
+    min = min(params$min_novelty)
+)
+
+markdownHeader("ECDF", level = 2)
+plotNovelty(
+    object = sce,
+    geom = "ecdf",
+    interestingGroups = "sampleName",
+    min = min(params$min_novelty)
+)
+```
+
+# Mitochondrial abundance {.tabset}
+
+We evaluate overall mitochondrial gene expression as a biomarker of cellular stress during sample preparation.
+
+We evaluate overall mitochondrial gene expression as a biomarker of cellular stress during sample preparation. Ideally, we like to keep only cells that contain a maximum of 10% (0.1 ratio) mitochondrially encoded transcripts per cell. Here we're seeing a much broader distribution (see histogram). There is a relatively high fraction of cells with a mitochondrial transcript abundance over 10%. We're looking at cardiomyocyotes, so this is physiological. However, there's a pretty large variation observed in the cells here, from less than 10% up to 60%. We'll have to figure out how we want to handle this in the downstream analysis. We'll likely not want to filter and regress out the effects of mitochondrial abundance in our clustering analysis, as is generally recommended.
+
+```{r plot_mito_ratio}
+# getMethod("plotMitoRatio", "SingleCellExperiment")
+
+markdownHeader("Violin", level = 2)
+plotMitoRatio(
+    object = sce,
+    geom = "violin",
+    max = max(params$max_mito_ratio)
+)
+
+markdownHeader("Ridgeline", level = 2)
+plotMitoRatio(
+    object = sce,
+    geom = "ridgeline",
+    max = max(params$max_mito_ratio)
+)
+
+markdownHeader("Histogram", level = 2)
+plotMitoRatio(
+    object = sce,
+    geom = "histogram",
+    interestingGroups = "sampleName",
+    max = max(params$max_mito_ratio)
+)
+
+markdownHeader("ECDF", level = 2)
+plotMitoRatio(
+    object = sce,
+    geom = "ecdf",
+    interestingGroups = "sampleName",
+    max = max(params$max_mito_ratio)
+)
+```
+
+Here's a QC summary prior to filtering:
+
+```{r}
+plotQC(sce)
+```
+
+# Filter cells
+
+Now we're applying our recommended filtering cutoffs to the aggregated sequencing replicates.
+
+```{r filter_cells}
+# getMethod("filterCells", "SingleCellExperiment")
+sce <- filterCells(
+    object = sce,
+    nCells = params$n_cells,
+    minUMIs = params$min_umis,
+    maxUMIs = params$max_umis,
+    minGenes = params$min_genes,
+    maxGenes = params$max_genes,
+    maxMitoRatio = params$max_mito_ratio,
+    minNovelty = params$min_novelty,
+    minCellsPerGene = params$min_cells_per_gene
+)
+```
+
+And here's the QC summary after filtering:
+
+```{r plot_filtered_qc, results="asis"}
+# getMethod("plotQC", "SingleCellExperiment")
+plotQC(sce)
+```
+
+# Save filtered data
+
+## S4 object
+
+```{r save}
+assignAndSaveData(
+    name = paste(bcb_name, "filtered", sep = "_"),
+    object = sce,
+    dir = params$data_dir
+)
+```
+
+## Counts matrix
+
+```{r counts}
+counts <- counts(sce)
+saveData(counts, dir = params$data_dir)
+
+# MatrixMarket Exchange format (.mtx)
+writeCounts(counts, dir = params$results_dir)
+
+# Comma separated values (.csv)
+write.csv(
+    x = as.matrix(counts),
+    file = file.path(params$results_dir, "counts.csv")
+)
+R.utils::gzip(
+    filename = file.path(params$results_dir, "counts.csv"),
+    overwrite = TRUE,
+    remove = TRUE
+)
+```
+
+## Quality metrics
+
+```{r metrics}
+metrics <- metrics(sce)
+write.csv(
+    x = metrics,
+    file = file.path(params$results_dir, "metrics.csv")
+)
+```
+
+## Gene annotations
+
+```{r gene_annotations}
+gene_annotations <- rowRanges(sce) %>% as.data.frame()
+write.csv(
+    x = gene_annotations,
+    file = file.path(params$results_dir, "gene_annotations.csv")
+)
+```
+
+# Conclusion
+
+Cells to include in the downstream analysis were defined largely by the UMIs per cell and genes per cell. In conclusion, there are ~1000 high quality cells per sample (see barplot above). The inDrop capture and sequencing worked, so we can proceed with the clustering analysis. For the clustering analysis, we will use the Seurat package. Initially, we will perform the clustering inidividually and generate a report for each sample. This is helpful to see if we have similar structure for each sample. Then after we look at each sample individually, we'll combine all of the cells into a single dataset to assess how well the samples align into clusters by putative cell types.
+
+```{r footer, child="_footer.Rmd", eval=file.exists("_footer.Rmd")}
+```
