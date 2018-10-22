@@ -1,1 +1,4 @@
 bcbio_harvard_indrop_v3
+*.html
+data
+data-raw
