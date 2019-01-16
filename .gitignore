@@ -1,4 +1,8 @@
-bcbio_harvard_indrop_v3
+*.Rdata
+*.csv
 *.html
+*.pdf
+*.tsv
+bcbio_harvard_indrop_v3
 data
 data-raw
