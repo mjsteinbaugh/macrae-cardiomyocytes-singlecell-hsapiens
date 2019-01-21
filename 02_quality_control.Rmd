@@ -11,7 +11,7 @@ params:
   max_genes: !r Inf
   min_novelty: 0.8
   max_mito_ratio: 1
-  min_cells_per_gene: 10
+  min_cells_per_gene: 3
   data_dir: !r file.path("data", Sys.Date())
   results_dir: !r file.path("results", Sys.Date(), "quality_control")
 ---
