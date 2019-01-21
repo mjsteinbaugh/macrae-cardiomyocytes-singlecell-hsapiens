@@ -1,5 +1,4 @@
-# v0.1.18
-library(bcbioSingleCell)
+library(bcbioSingleCell)  # v0.1.18
 bcb <- bcbioSingleCell(
     uploadDir = "bcbio_harvard_indrop_v3/final",
     organism = "Homo sapiens",
