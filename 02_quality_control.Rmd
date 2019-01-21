@@ -4,11 +4,10 @@ author: "`r getOption('author')`"
 date: "`r Sys.Date()`"
 bibliography: bibliography.bib
 params:
-  bcb_file: "data/2018-07-30/bcb.rda"
-  n_cells: 2500
-  min_umis: 300
+  bcb_file: "data/final/bcb_pool_filtered.rda"
+  min_umis: 1000
   max_umis: !r Inf
-  min_genes: 200
+  min_genes: 500
   max_genes: !r Inf
   min_novelty: 0.8
   max_mito_ratio: 1
@@ -18,7 +17,7 @@ params:
 ---
 
 ```{r setup, cache=FALSE, message=FALSE}
-# Last modified 2018-07-30
+# Last modified 2019-01-21
 bcbioSingleCell::prepareSingleCellTemplate()
 source("_setup.R")
 
@@ -36,7 +35,7 @@ stopifnot(is(bcb, "SingleCellExperiment"))
 invisible(validObject(bcb))
 bcb_original <- bcb
 
-# Metadata fix, for working with v0.1.8
+# Metadata fix, for working with v0.1.8.
 # `sampleNameAggregate` deprecated in favor of `aggregate` column in sampleData
 sampleData(bcb)$aggregate <- sampleData(bcb)$sampleNameAggregate
 sampleData(bcb)$sampleNameAggregate <- NULL
