@@ -9,7 +9,7 @@ params:
     pcCompute: 20
     pcUse: FALSE
     varsToRegress: !r c("nUMI", "S.Score", "G2M.Score")
-    resolution: 0.8
+    resolution: 0.6
     outputDir: "."
 ---
 
