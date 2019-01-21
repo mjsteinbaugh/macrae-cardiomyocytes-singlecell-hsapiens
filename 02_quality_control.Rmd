@@ -10,6 +10,7 @@ params:
   min_genes: 500
   max_genes: !r Inf
   min_novelty: 0.8
+  # Don't filter based on mito ratio because they're cardiomyocytes.
   max_mito_ratio: 1
   min_cells_per_gene: 3
   data_dir: !r file.path("data", Sys.Date())
